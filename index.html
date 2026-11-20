@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Monitoring Solar Dome Cocoa Dryer</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <header class="topbar">
+    <div>
+      <h1>Solar Dome Cocoa Dryer</h1>
+      <p id="last-update">Memuat data sensor...</p>
+    </div>
+    <span id="status-badge" class="badge badge-warn">Proses Pengeringan</span>
+  </header>
+
+  <main class="container">
+    <!-- Ringkasan Kadar Air (Utama) -->
+    <section class="grid-2">
+      <div class="card highlight-card">
+        <span class="label">Kadar Air Dalam Dome</span>
+        <div class="value" id="mc-dalam">-- %</div>
+        <div class="sub">Berat: <strong id="berat-dalam">-- g</strong></div>
+        <div class="target-note">Target SNI: &le; 7.5%</div>
+      </div>
+
+      <div class="card">
+        <span class="label">Kadar Air Luar Dome</span>
+        <div class="value" id="mc-luar">-- %</div>
+        <div class="sub">Berat: <strong id="berat-luar">-- g</strong></div>
+        <div class="target-note">Pembanding Lingkungan</div>
+      </div>
+    </section>
+
+    <!-- Suhu & Kelembaban -->
+    <section class="grid-3">
+      <div class="card">
+        <span class="label">Suhu Dalam</span>
+        <div class="value-sm" id="suhu-dalam">-- &deg;C</div>
+      </div>
+      <div class="card">
+        <span class="label">RH Dalam</span>
+        <div class="value-sm" id="rh-dalam">-- %</div>
+      </div>
+      <div class="card">
+        <span class="label">Suhu Luar</span>
+        <div class="value-sm" id="suhu-luar">-- &deg;C</div>
+      </div>
+    </section>
+
+    <!-- Grafik Penurunan Kadar Air -->
+    <section class="card chart-box">
+      <div class="chart-header">
+        <h2>Grafik Penurunan Kadar Air (%)</h2>
+        <button id="btn-refresh" onclick="fetchData()">Refresh</button>
+      </div>
+      <canvas id="mcChart"></canvas>
+    </section>
+
+    <!-- Grafik Perbandingan Suhu -->
+    <section class="card chart-box">
+      <div class="chart-header">
+        <h2>Grafik Suhu Dalam vs Luar (&deg;C)</h2>
+      </div>
+      <canvas id="tempChart"></canvas>
+    </section>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
