@@ -1,6 +1,6 @@
 // ================= ISI DATA CHANNEL THINGSPEAK KAMU =================
-const CHANNEL_ID   = "CHANNEL_ID_KAMU";   // Contoh: "2748192"
-const READ_API_KEY = "READ_API_KEY_KAMU"; // Ambil dari tab API Keys -> Read API Key
+const CHANNEL_ID   = "3585769";   // Contoh: "2748192"
+const READ_API_KEY = "T7MT8S7DF5J592C5"; // Ambil dari tab API Keys -> Read API Key
 // =====================================================================
 
 let mcChartInstance = null;
