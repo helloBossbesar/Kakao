@@ -127,6 +127,130 @@ button {
   border-radius: 8px;
   font-size: 0.78rem;
   cursor: pointer;
+  transition: background 0.2s, opacity 0.2s;
+}
+
+button:hover {
+  background: #0369a1;
 }
 
 button:active { opacity: 0.8; }
+
+.btn-export {
+  background: #059669;
+}
+
+.btn-export:hover {
+  background: #047857;
+}
+
+/* Bagian Riwayat Data */
+.history-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.history-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.history-header h2 {
+  font-size: 0.95rem;
+  color: #e2e8f0;
+}
+
+.history-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+input[type="date"] {
+  color-scheme: dark;
+  background: #0f172a;
+  color: #f8fafc;
+  border: 1px solid #334155;
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-size: 0.78rem;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+input[type="date"]:focus {
+  border-color: #38bdf8;
+}
+
+.table-wrapper {
+  overflow-x: auto;
+  max-height: 360px;
+  overflow-y: auto;
+  border: 1px solid #334155;
+  border-radius: 8px;
+  background: #0f172a;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.78rem;
+  white-space: nowrap;
+}
+
+thead th {
+  position: sticky;
+  top: 0;
+  background: #1e293b;
+  color: #94a3b8;
+  font-weight: 600;
+  text-align: left;
+  padding: 10px 12px;
+  border-bottom: 1px solid #334155;
+  z-index: 2;
+}
+
+tbody td {
+  padding: 8px 12px;
+  border-bottom: 1px solid #1e293b;
+  color: #cbd5e1;
+}
+
+tbody tr:nth-child(even) {
+  background: rgba(30, 41, 59, 0.4);
+}
+
+tbody tr:hover {
+  background: rgba(56, 189, 248, 0.08);
+}
+
+.table-empty {
+  text-align: center;
+  color: #94a3b8;
+  padding: 24px 12px !important;
+  font-style: italic;
+}
+
+/* Custom scrollbar untuk table wrapper */
+.table-wrapper::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.table-wrapper::-webkit-scrollbar-track {
+  background: #0f172a;
+}
+
+.table-wrapper::-webkit-scrollbar-thumb {
+  background: #334155;
+  border-radius: 4px;
+}
+
+.table-wrapper::-webkit-scrollbar-thumb:hover {
+  background: #475569;
+}

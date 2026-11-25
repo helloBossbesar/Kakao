@@ -5,9 +5,10 @@ const READ_API_KEY = "T7MT8S7DF5J592C5"; // Ambil dari tab API Keys -> Read API 
 
 let mcChartInstance = null;
 let tempChartInstance = null;
+let currentFeeds = [];
 
 async function fetchData() {
-  const url = `https://api.thingspeak.com/channels/${CHANNEL_ID}/feeds.json?api_key=${READ_API_KEY}&results=25`;
+  const url = `https://api.thingspeak.com/channels/${CHANNEL_ID}/feeds.json?api_key=${READ_API_KEY}&results=300`;
 
   try {
     const res = await fetch(url);
@@ -15,6 +16,8 @@ async function fetchData() {
     const feeds = data.feeds;
 
     if (!feeds || feeds.length === 0) return;
+
+    currentFeeds = feeds;
 
     // Ambil data paling terakhir untuk tampilan angka real-time
     const latest = feeds[feeds.length - 1];
@@ -50,14 +53,18 @@ async function fetchData() {
       badge.className = "badge badge-warn";
     }
 
-    // Siapkan data grafik
-    const labels   = feeds.map(f => new Date(f.created_at).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" }));
-    const arrMcIn  = feeds.map(f => parseFloat(f.field1 || 0));
-    const arrMcOut = feeds.map(f => parseFloat(f.field2 || 0));
-    const arrTIn   = feeds.map(f => parseFloat(f.field6 || 0));
-    const arrTOut  = feeds.map(f => parseFloat(f.field8 || 0));
+    // Siapkan data grafik (gunakan 30 data terakhir agar tetap bersih dan tidak padat)
+    const chartFeeds = feeds.slice(-30);
+    const labels   = chartFeeds.map(f => new Date(f.created_at).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" }));
+    const arrMcIn  = chartFeeds.map(f => parseFloat(f.field1 || 0));
+    const arrMcOut = chartFeeds.map(f => parseFloat(f.field2 || 0));
+    const arrTIn   = chartFeeds.map(f => parseFloat(f.field6 || 0));
+    const arrTOut  = chartFeeds.map(f => parseFloat(f.field8 || 0));
 
     renderCharts(labels, arrMcIn, arrMcOut, arrTIn, arrTOut);
+
+    // Render tabel riwayat (mempertahankan filter tanggal yang sedang aktif)
+    renderHistoryTable();
   } catch (err) {
     document.getElementById("last-update").innerText = "Gagal memuat data (cek koneksi / API Key)";
   }
@@ -91,6 +98,183 @@ function renderCharts(labels, mcIn, mcOut, tIn, tOut) {
     },
     options: { responsive: true, plugins: { legend: { labels: { color: "#cbd5e1" } } }, scales: { x: { ticks: { color: "#94a3b8" } }, y: { ticks: { color: "#94a3b8" } } } }
   });
+}
+
+// Helper konversi tanggal Date object ke string format YYYY-MM-DD lokal
+function formatLocalDateYMD(dateObj) {
+  const year = dateObj.getFullYear();
+  const month = String(dateObj.getMonth() + 1).padStart(2, "0");
+  const day = String(dateObj.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+// Ambil data feeds yang sesuai filter tanggal
+function getFilteredFeeds() {
+  const filterDateInput = document.getElementById("filter-date");
+  const selectedDate = filterDateInput ? filterDateInput.value : "";
+
+  if (!selectedDate) {
+    return currentFeeds;
+  }
+
+  return currentFeeds.filter(feed => {
+    const feedDate = new Date(feed.created_at);
+    return formatLocalDateYMD(feedDate) === selectedDate;
+  });
+}
+
+// Render tabel riwayat
+function renderHistoryTable() {
+  const tbody = document.getElementById("history-tbody");
+  const countEl = document.getElementById("record-count");
+  if (!tbody) return;
+
+  const filteredFeeds = getFilteredFeeds();
+  // Urutkan dari waktu terbaru di paling atas
+  const sortedFeeds = [...filteredFeeds].reverse();
+
+  if (countEl) {
+    countEl.innerText = `Menampilkan ${sortedFeeds.length} rekaman data`;
+  }
+
+  if (sortedFeeds.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="9" class="table-empty">Tidak ada data untuk tanggal ini</td></tr>`;
+    return;
+  }
+
+  const rowsHtml = sortedFeeds.map(feed => {
+    const dateObj = new Date(feed.created_at);
+    const tglStr = dateObj.toLocaleDateString("id-ID", {
+      weekday: "long",
+      day: "numeric",
+      month: "short",
+      year: "numeric"
+    });
+    const jamStr = dateObj.toLocaleTimeString("id-ID", {
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit"
+    });
+
+    const mcDlm   = parseFloat(feed.field1 || 0).toFixed(1);
+    const mcLuar  = parseFloat(feed.field2 || 0).toFixed(1);
+    const bDlm    = parseFloat(feed.field4 || 0).toFixed(1);
+    const bLuar   = parseFloat(feed.field5 || 0).toFixed(1);
+    const sDlm    = parseFloat(feed.field6 || 0).toFixed(1);
+    const rhDlm   = parseFloat(feed.field7 || 0).toFixed(0);
+    const sLuar   = parseFloat(feed.field8 || 0).toFixed(1);
+
+    return `
+      <tr>
+        <td>${tglStr}</td>
+        <td>${jamStr}</td>
+        <td>${mcDlm} %</td>
+        <td>${bDlm} g</td>
+        <td>${mcLuar} %</td>
+        <td>${bLuar} g</td>
+        <td>${sDlm} °C</td>
+        <td>${rhDlm} %</td>
+        <td>${sLuar} °C</td>
+      </tr>
+    `;
+  }).join("");
+
+  tbody.innerHTML = rowsHtml;
+}
+
+// Event handler saat filter tanggal berubah
+function filterDataByDate() {
+  renderHistoryTable();
+}
+
+// Reset filter tanggal
+function resetDateFilter() {
+  const filterInput = document.getElementById("filter-date");
+  if (filterInput) {
+    filterInput.value = "";
+  }
+  renderHistoryTable();
+}
+
+// Export data yang sedang ditampilkan ke file CSV / Excel
+function exportCSV() {
+  const filteredFeeds = getFilteredFeeds();
+  const sortedFeeds = [...filteredFeeds].reverse();
+
+  if (sortedFeeds.length === 0) {
+    alert("Tidak ada data untuk diekspor!");
+    return;
+  }
+
+  const filterDateInput = document.getElementById("filter-date");
+  const selectedDate = filterDateInput && filterDateInput.value ? filterDateInput.value : formatLocalDateYMD(new Date());
+  const filename = `Riwayat_Kakao_${selectedDate}.csv`;
+
+  // Header CSV berurutan
+  const headers = [
+    "Hari, Tanggal & Bulan",
+    "Jam",
+    "MC Dlm (%)",
+    "Berat Dlm (g)",
+    "MC Luar (%)",
+    "Berat Luar (g)",
+    "T. Dlm (°C)",
+    "RH Dlm (%)",
+    "T. Luar (°C)"
+  ];
+
+  const csvRows = [
+    headers.map(h => `"${h}"`).join(",")
+  ];
+
+  sortedFeeds.forEach(feed => {
+    const dateObj = new Date(feed.created_at);
+    const tglStr = dateObj.toLocaleDateString("id-ID", {
+      weekday: "long",
+      day: "numeric",
+      month: "short",
+      year: "numeric"
+    });
+    const jamStr = dateObj.toLocaleTimeString("id-ID", {
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit"
+    });
+
+    const mcDlm   = parseFloat(feed.field1 || 0).toFixed(1);
+    const mcLuar  = parseFloat(feed.field2 || 0).toFixed(1);
+    const bDlm    = parseFloat(feed.field4 || 0).toFixed(1);
+    const bLuar   = parseFloat(feed.field5 || 0).toFixed(1);
+    const sDlm    = parseFloat(feed.field6 || 0).toFixed(1);
+    const rhDlm   = parseFloat(feed.field7 || 0).toFixed(0);
+    const sLuar   = parseFloat(feed.field8 || 0).toFixed(1);
+
+    const row = [
+      `"${tglStr.replace(/"/g, '""')}"`,
+      `"${jamStr}"`,
+      `"${mcDlm} %"`,
+      `"${bDlm} g"`,
+      `"${mcLuar} %"`,
+      `"${bLuar} g"`,
+      `"${sDlm} °C"`,
+      `"${rhDlm} %"`,
+      `"${sLuar} °C"`
+    ];
+    csvRows.push(row.join(","));
+  });
+
+  const csvContent = csvRows.join("\r\n");
+  const blob = new Blob(["\uFEFF" + csvContent], { type: "text/csv;charset=utf-8;" });
+  const link = document.createElement("a");
+  const url = URL.createObjectURL(blob);
+
+  link.setAttribute("href", url);
+  link.setAttribute("download", filename);
+  link.style.visibility = "hidden";
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
 }
 
 // Jalankan pertama kali & auto-refresh tiap 20 detik

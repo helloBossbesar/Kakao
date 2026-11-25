@@ -66,6 +66,43 @@
       </div>
       <canvas id="tempChart"></canvas>
     </section>
+
+    <!-- Riwayat Data Pengeringan -->
+    <section class="card history-section">
+      <div class="history-header">
+        <div>
+          <h2>Riwayat Data Pengeringan</h2>
+          <p id="record-count" class="sub">Menampilkan 0 rekaman data</p>
+        </div>
+        <div class="history-actions">
+          <input type="date" id="filter-date" onchange="filterDataByDate()" />
+          <button id="btn-reset-date" type="button" onclick="resetDateFilter()">Semua</button>
+          <button id="btn-export" type="button" class="btn-export" onclick="exportCSV()">Export Excel</button>
+        </div>
+      </div>
+      <div class="table-wrapper">
+        <table id="history-table">
+          <thead>
+            <tr>
+              <th>Hari, Tanggal &amp; Bulan</th>
+              <th>Jam</th>
+              <th>MC Dlm</th>
+              <th>Berat Dlm</th>
+              <th>MC Luar</th>
+              <th>Berat Luar</th>
+              <th>T. Dlm</th>
+              <th>RH Dlm</th>
+              <th>T. Luar</th>
+            </tr>
+          </thead>
+          <tbody id="history-tbody">
+            <tr>
+              <td colspan="9" class="table-empty">Memuat riwayat data...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
   </main>
 
   <script src="app.js"></script>
