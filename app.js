@@ -29,28 +29,49 @@ async function fetchData() {
     const rhDlm     = parseFloat(latest.field7 || 0);
     const suhuLuar  = parseFloat(latest.field8 || 0);
 
-    document.getElementById("mc-dalam").innerText    = `${mcDalam.toFixed(1)} %`;
-    document.getElementById("mc-luar").innerText     = `${mcLuar.toFixed(1)} %`;
-    document.getElementById("berat-dalam").innerText = `${beratDlm.toFixed(1)} g`;
-    document.getElementById("berat-luar").innerText  = `${beratLuar.toFixed(1)} g`;
-    document.getElementById("suhu-dalam").innerText  = `${suhuDlm.toFixed(1)} °C`;
-    document.getElementById("rh-dalam").innerText    = `${rhDlm.toFixed(0)} %`;
-    document.getElementById("suhu-luar").innerText   = `${suhuLuar.toFixed(1)} °C`;
-
-    // Format waktu update terakhir (WITA / lokal HP)
-    const waktu = new Date(latest.created_at).toLocaleTimeString("id-ID", {
-      hour: "2-digit", minute: "2-digit", second: "2-digit"
-    });
-    document.getElementById("last-update").innerText = `Update terakhir: ${waktu}`;
-
-    // Indikator otomatis target kering SNI biji kakao (<= 7.5%)
+    // Deteksi apakah perangkat offline (tidak mengirim data > 60 detik)
+    const selisihDetik = (Date.now() - new Date(latest.created_at).getTime()) / 1000;
     const badge = document.getElementById("status-badge");
-    if (mcDalam > 0 && mcDalam <= 7.5) {
-      badge.innerText = "Kering Standar SNI (<=7.5%)";
-      badge.className = "badge badge-ok";
+
+    if (selisihDetik > 60) {
+      // Reset tampilan kartu real-time saat offline
+      document.getElementById("mc-dalam").innerText    = "-- %";
+      document.getElementById("mc-luar").innerText     = "-- %";
+      document.getElementById("berat-dalam").innerText = "-- g";
+      document.getElementById("berat-luar").innerText  = "-- g";
+      document.getElementById("suhu-dalam").innerText  = "-- °C";
+      document.getElementById("rh-dalam").innerText    = "-- %";
+      document.getElementById("suhu-luar").innerText   = "-- °C";
+
+      document.getElementById("last-update").innerText =
+        `Perangkat Offline (Data terakhir: ${formatTanggalIndo(latest.created_at)} | ${formatJamIndo(latest.created_at)})`;
+
+      badge.innerText = "Perangkat Offline";
+      badge.className = "badge badge-offline";
     } else {
-      badge.innerText = "Proses Pengeringan";
-      badge.className = "badge badge-warn";
+      // Perangkat online: tampilkan nilai pembacaan sensor aktif
+      document.getElementById("mc-dalam").innerText    = `${mcDalam.toFixed(1)} %`;
+      document.getElementById("mc-luar").innerText     = `${mcLuar.toFixed(1)} %`;
+      document.getElementById("berat-dalam").innerText = `${beratDlm.toFixed(1)} g`;
+      document.getElementById("berat-luar").innerText  = `${beratLuar.toFixed(1)} g`;
+      document.getElementById("suhu-dalam").innerText  = `${suhuDlm.toFixed(1)} °C`;
+      document.getElementById("rh-dalam").innerText    = `${rhDlm.toFixed(0)} %`;
+      document.getElementById("suhu-luar").innerText   = `${suhuLuar.toFixed(1)} °C`;
+
+      // Format waktu update terakhir (WITA / lokal HP)
+      const waktu = new Date(latest.created_at).toLocaleTimeString("id-ID", {
+        hour: "2-digit", minute: "2-digit", second: "2-digit"
+      });
+      document.getElementById("last-update").innerText = `Update terakhir: ${waktu}`;
+
+      // Indikator otomatis target kering SNI biji kakao (<= 7.5%)
+      if (mcDalam > 0 && mcDalam <= 7.5) {
+        badge.innerText = "Kering Standar SNI (<=7.5%)";
+        badge.className = "badge badge-ok";
+      } else {
+        badge.innerText = "Proses Pengeringan";
+        badge.className = "badge badge-warn";
+      }
     }
 
     // Siapkan data grafik (gunakan 30 data terakhir agar tetap bersih dan tidak padat)
@@ -97,6 +118,23 @@ function renderCharts(labels, mcIn, mcOut, tIn, tOut) {
       ]
     },
     options: { responsive: true, plugins: { legend: { labels: { color: "#cbd5e1" } } }, scales: { x: { ticks: { color: "#94a3b8" } }, y: { ticks: { color: "#94a3b8" } } } }
+  });
+}
+
+// Helper format tanggal dan jam Indonesia untuk status update
+function formatTanggalIndo(dateStr) {
+  return new Date(dateStr).toLocaleDateString("id-ID", {
+    day: "numeric",
+    month: "short",
+    year: "numeric"
+  });
+}
+
+function formatJamIndo(dateStr) {
+  return new Date(dateStr).toLocaleTimeString("id-ID", {
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit"
   });
 }
 
